@@ -34,13 +34,14 @@ else
   exit 1
 fi
 
-# Download the CLI if it isn't there yet.
+# Download the CLI if it isn't there yet, checking it against the SHA-256 that
+# GitHub publishes for each file of the release. Update these with DCE_VERSION.
 if [[ ! -x "$BIN" ]]; then
   case "$(uname -s)-$(uname -m)" in
-    Darwin-arm64)  asset="osx-arm64" ;;
-    Darwin-x86_64) asset="osx-x64" ;;
-    Linux-x86_64)  asset="linux-x64" ;;
-    Linux-aarch64) asset="linux-arm64" ;;
+    Darwin-arm64)  asset="osx-arm64";   sha256="623f9d2dce568e17a46b8fbd366a18dca49803d386216f4ba24507d2c000fee9" ;;
+    Darwin-x86_64) asset="osx-x64";     sha256="91b4eae3525df85d084969004f3a287edad4eeaafd664e4869b26bb8422e2e88" ;;
+    Linux-x86_64)  asset="linux-x64";   sha256="3e253e28ec7ea034b2201443fa84571142945299296541ecbe196ffceef8bc3c" ;;
+    Linux-aarch64) asset="linux-arm64"; sha256="02a47fc8e0192fd509fbb082aadd9322035b18feae96849699fefc424a1e3379" ;;
     *) echo "Unsupported platform: $(uname -s)-$(uname -m)" >&2; exit 1 ;;
   esac
   echo "Downloading DiscordChatExporter $DCE_VERSION ($asset)..."
@@ -48,6 +49,17 @@ if [[ ! -x "$BIN" ]]; then
   trap 'rm -rf "$tmp"' EXIT
   curl -fsSL -o "$tmp/dce.zip" \
     "https://github.com/Tyrrrz/DiscordChatExporter/releases/download/$DCE_VERSION/DiscordChatExporter.Cli.$asset.zip"
+  if command -v sha256sum >/dev/null; then
+    actual="$(sha256sum "$tmp/dce.zip" | cut -d' ' -f1)"
+  else
+    actual="$(shasum -a 256 "$tmp/dce.zip" | cut -d' ' -f1)"
+  fi
+  if [[ "$actual" != "$sha256" ]]; then
+    echo "Checksum mismatch for DiscordChatExporter.Cli.$asset.zip, not installing it." >&2
+    echo "  expected $sha256" >&2
+    echo "  got      $actual" >&2
+    exit 1
+  fi
   mkdir -p "$PRIVATE/bin"
   unzip -oq "$tmp/dce.zip" -d "$PRIVATE/bin"
   chmod +x "$BIN"
