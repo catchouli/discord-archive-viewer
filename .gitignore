@@ -1,0 +1,12 @@
+# Everything private lives here: bot token, server ID, exported chats and media,
+# and the downloaded DiscordChatExporter binaries. Never commit it.
+/private/
+
+# Build output
+/target/
+
+# Generated demo export (make it with demo/make_demo.sh)
+/demo/output/
+
+.DS_Store
+__pycache__/
