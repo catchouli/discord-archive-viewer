@@ -1,4 +1,4 @@
-# Working on discord-viewer
+# Working on discord-archive-viewer
 
 ## Layout
 

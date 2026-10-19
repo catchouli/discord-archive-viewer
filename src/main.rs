@@ -1,6 +1,6 @@
 //! Discord export viewer: browse, search and view media from a DiscordChatExporter JSON export.
 //!
-//! Usage: discord-viewer [EXPORT_DIR] [--media MEDIA_DIR]
+//! Usage: discord-archive-viewer [EXPORT_DIR] [--media MEDIA_DIR]
 //!
 //! EXPORT_DIR defaults to $DISCORD_VIEWER_DATA, or the nearest `private/data/latest`
 //! (what `export/export.sh` writes) or `data/latest`, looking up from the current
@@ -49,7 +49,7 @@ fn main() -> eframe::Result {
             "--media" => media_dir = args.next().map(PathBuf::from),
             "--check" => check = true,
             "-h" | "--help" => {
-                println!("Usage: discord-viewer [EXPORT_DIR] [--media MEDIA_DIR] [--check]");
+                println!("Usage: discord-archive-viewer [EXPORT_DIR] [--media MEDIA_DIR] [--check]");
                 println!("--check loads the export, parses every message and reports problems, without opening a window.");
                 println!("EXPORT_DIR defaults to the nearest private/data/latest folder (what export/export.sh writes).");
                 return Ok(());
@@ -71,12 +71,12 @@ fn main() -> eframe::Result {
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("Discord Viewer")
+            .with_title("Discord Archive Viewer")
             .with_inner_size([1360.0, 860.0])
             .with_min_inner_size([820.0, 480.0]),
         ..Default::default()
     };
-    eframe::run_native("discord-viewer", options, Box::new(move |cc| Ok(Box::new(app::App::new(cc, data_dir, media_dir)))))
+    eframe::run_native("discord-archive-viewer", options, Box::new(move |cc| Ok(Box::new(app::App::new(cc, data_dir, media_dir)))))
 }
 
 /// Loads everything headlessly and reports what would be shown, to sanity-check an export.

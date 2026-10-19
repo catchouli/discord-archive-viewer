@@ -1,10 +1,10 @@
 [package]
-name = "discord-viewer"
+name = "discord-archive-viewer"
 version = "0.1.0"
 edition = "2024"
 description = "Browse, search and view media from a DiscordChatExporter JSON export"
 license = "MIT"
-repository = "https://github.com/catchouli/discord-viewer"
+repository = "https://github.com/catchouli/discord-archive-viewer"
 
 [dependencies]
 eframe = "0.37"

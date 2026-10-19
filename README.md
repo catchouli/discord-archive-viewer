@@ -1,4 +1,4 @@
-# discord-viewer
+# discord-archive-viewer
 
 <a href="screenshots/chat.jpg"><img src="screenshots/chat-thumb.jpg" width="32%"></a>
 <a href="screenshots/art.jpg"><img src="screenshots/art-thumb.jpg" width="32%"></a>
@@ -79,7 +79,7 @@ private/
     media/            every attachment, avatar and emoji, shared between exports
 ```
 
-Video thumbnails are cached in `~/Library/Caches/discord-viewer` on a Mac and `~/.cache/discord-viewer` elsewhere.
+Video thumbnails are cached in `~/Library/Caches/discord-archive-viewer` on a Mac and `~/.cache/discord-archive-viewer` elsewhere.
 
 ## Licence
 

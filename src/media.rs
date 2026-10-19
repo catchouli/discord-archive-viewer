@@ -92,7 +92,7 @@ pub fn cache_dir() -> PathBuf {
         let home = PathBuf::from(std::env::var_os("HOME").unwrap_or_default());
         if cfg!(target_os = "macos") { home.join("Library/Caches") } else { home.join(".cache") }
     });
-    base.join("discord-viewer")
+    base.join("discord-archive-viewer")
 }
 
 impl MediaCache {
