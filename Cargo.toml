@@ -3,6 +3,8 @@ name = "discord-viewer"
 version = "0.1.0"
 edition = "2024"
 description = "Browse, search and view media from a DiscordChatExporter JSON export"
+license = "MIT"
+repository = "https://github.com/catchouli/discord-viewer"
 
 [dependencies]
 eframe = "0.37"

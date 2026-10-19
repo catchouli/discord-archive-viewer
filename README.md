@@ -80,3 +80,7 @@ private/
 ```
 
 Video thumbnails are cached in `~/Library/Caches/discord-viewer` on a Mac and `~/.cache/discord-viewer` elsewhere.
+
+## Licence
+
+MIT, see [LICENSE](LICENSE).
