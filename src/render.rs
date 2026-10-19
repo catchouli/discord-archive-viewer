@@ -502,9 +502,12 @@ fn file(ui: &mut Ui, env: &mut Env, a: &Attachment) {
         ui.horizontal(|ui| {
             ui.label(RichText::new("📄").size(26.0));
             ui.vertical(|ui| {
+                // Files that could run code when opened are only shown in their folder.
+                let safe = crate::model::safe_to_open(&a.url);
+                let hint = if safe { "Open" } else { "Show in folder (this kind of file isn't opened directly)" };
                 let r = ui.add(Label::new(RichText::new(&a.file_name).color(LINK)).sense(Sense::click()).truncate());
-                if r.on_hover_cursor(CursorIcon::PointingHand).on_hover_text("Open").clicked() {
-                    env.actions.push(Action::Open(a.url.to_string()));
+                if r.on_hover_cursor(CursorIcon::PointingHand).on_hover_text(hint).clicked() {
+                    env.actions.push(if safe { Action::Open(a.url.to_string()) } else { Action::Reveal(a.url.to_string()) });
                 }
                 ui.horizontal(|ui| {
                     ui.label(RichText::new(fmt_size(a.size)).size(12.0).color(TEXT_MUTED));

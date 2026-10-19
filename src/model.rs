@@ -422,6 +422,23 @@ pub fn ext_kind(name: &str) -> MediaKind {
     }
 }
 
+/// Whether something from a chat is safe to hand to the OS to open.
+///
+/// Only web links and image, video and audio files are. Anything else (executables,
+/// scripts, `.command` files, installers, HTML, SVG, documents…) could run code when
+/// opened, and files saved by the exporter don't get the OS's "downloaded from the
+/// internet" warning, so those are only ever shown in their folder.
+pub fn safe_to_open(s: &str) -> bool {
+    if s.starts_with("https://") || s.starts_with("http://") {
+        return true;
+    }
+    if s.contains("://") {
+        return false;
+    }
+    let name = Path::new(s).file_name().map(|n| n.to_string_lossy().to_lowercase()).unwrap_or_default();
+    matches!(ext_kind(&name), MediaKind::Image | MediaKind::Video | MediaKind::Audio)
+}
+
 /// Rewrites media paths whose folder no longer exists onto `media_dir`.
 struct PathFixer {
     media_dir: Option<PathBuf>,
@@ -841,4 +858,27 @@ fn build_sidebar(channels: &[Channel], meta: &[(Option<u64>, String)], api: &[Ap
     // Uncategorised first, then by position, archive last.
     cats.sort_by_key(|c| (c.archive, c.id != 0, pos(c.id), c.name.clone()));
     cats
+}
+
+#[cfg(test)]
+mod tests {
+    use super::safe_to_open;
+
+    #[test]
+    fn only_links_media_and_documents_open() {
+        assert!(safe_to_open("https://example.com/a"));
+        assert!(safe_to_open("/media/photo-1a2b.JPG"));
+        assert!(safe_to_open("/media/clip.mp4"));
+        assert!(safe_to_open("/media/song.mp3"));
+        assert!(!safe_to_open("/media/notes.txt"));
+        assert!(!safe_to_open("/media/drawing.svg"));
+        assert!(!safe_to_open("/media/paper.pdf"));
+        assert!(!safe_to_open("/media/run-me.command"));
+        assert!(!safe_to_open("/media/setup.exe"));
+        assert!(!safe_to_open("/media/script.sh"));
+        assert!(!safe_to_open("/media/page.html"));
+        assert!(!safe_to_open("/media/no-extension-1a2b"));
+        assert!(!safe_to_open("smb://server/share"));
+        assert!(!safe_to_open("file:///etc/passwd"));
+    }
 }

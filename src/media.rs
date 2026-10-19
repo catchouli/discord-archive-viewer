@@ -408,7 +408,7 @@ fn decode_any(path: &Path, bucket: u32) -> Result<Decoded, String> {
             }
         }
         Some(ImageFormat::Png) => {
-            let dec = image::codecs::png::PngDecoder::new(Cursor::new(&data)).map_err(|e| e.to_string())?;
+            let dec = image::codecs::png::PngDecoder::with_limits(Cursor::new(&data), image::Limits::default()).map_err(|e| e.to_string())?;
             if dec.is_apng().unwrap_or(false) {
                 animation(dec.apng().map_err(|e| e.to_string())?.into_frames(), bucket)
             } else {
@@ -429,7 +429,10 @@ fn decode_any(path: &Path, bucket: u32) -> Result<Decoded, String> {
 }
 
 fn animation(frames: image::Frames<'_>, bucket: u32) -> Result<Decoded, String> {
+    // Shrink each frame as it's decoded, and stop if the animation gets too big,
+    // so a huge GIF can't hold hundreds of full-size frames in memory at once.
     let mut raw = Vec::new();
+    let mut bytes = 0usize;
     for f in frames.take(MAX_FRAMES) {
         let f = f.map_err(|e| e.to_string())?;
         let (n, d) = f.delay().numer_denom_ms();
@@ -437,7 +440,12 @@ fn animation(frames: image::Frames<'_>, bucket: u32) -> Result<Decoded, String> 
         if delay < 0.02 {
             delay = 0.1; // browsers treat 0/10ms GIF delays as 100ms
         }
-        raw.push((f.into_buffer(), delay));
+        let buf = shrink(DynamicImage::ImageRgba8(f.into_buffer()), bucket).into_rgba8();
+        bytes += buf.as_raw().len();
+        raw.push((buf, delay));
+        if bytes > ANIMATION_BUDGET * 2 {
+            break;
+        }
     }
     if raw.is_empty() {
         return Err("no frames".into());
@@ -482,7 +490,7 @@ fn video_poster(path: &Path, bucket: u32) -> Result<Decoded, String> {
         let tmp = out.with_extension("tmp.jpg");
         let status = std::process::Command::new(crate::player::ffmpeg())
             .args(["-v", "error", "-y", "-i"])
-            .arg(path)
+            .arg(crate::player::file_input(path))
             .args(["-frames:v", "1", "-vf", "scale='min(1280,iw)':-2", "-q:v", "4"])
             .arg(&tmp)
             .stdin(std::process::Stdio::null())

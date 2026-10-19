@@ -178,14 +178,10 @@ impl App {
                     self.players.pause_all(&mut self.audio);
                     self.lightbox = Lightbox::open(a, &mut self.media, ch, msg, &path);
                     if self.lightbox.is_none() {
-                        let _ = open::that_detached(path.as_ref());
+                        open_safely(&path);
                     }
                 }
-                Action::Open(s) => {
-                    if let Err(e) = open::that_detached(&s) {
-                        eprintln!("open {s}: {e}");
-                    }
-                }
+                Action::Open(s) => open_safely(&s),
                 Action::Reveal(s) => reveal(&s),
             }
         }
@@ -560,7 +556,26 @@ fn channel_row(ui: &mut Ui, a: &Archive, ch: usize, selected: bool, indent: f32)
     })
 }
 
+/// Opens a link or file from a chat, falling back to showing the file in its folder
+/// when opening it could run code (see `model::safe_to_open`).
+fn open_safely(s: &str) {
+    if crate::model::safe_to_open(s) {
+        if let Err(e) = open::that_detached(s) {
+            eprintln!("open {s}: {e}");
+        }
+    } else if crate::model::is_local(s) && !s.contains("://") {
+        reveal(s);
+    } else {
+        eprintln!("not opening {s}: only http and https links are opened");
+    }
+}
+
 fn reveal(path: &str) {
+    // Exported media paths are absolute; anything else could be read as a command option.
+    if !std::path::Path::new(path).is_absolute() {
+        eprintln!("not revealing {path}: not an absolute path");
+        return;
+    }
     let res = if cfg!(target_os = "macos") {
         std::process::Command::new("open").arg("-R").arg(path).spawn().map(|_| ())
     } else if cfg!(target_os = "windows") {

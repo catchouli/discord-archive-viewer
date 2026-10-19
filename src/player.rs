@@ -142,11 +142,19 @@ impl Drop for KillOnDrop {
     }
 }
 
+/// An ffmpeg input that is always read as a local file: never a URL or other
+/// protocol, and never mistaken for an option even if it starts with `-`.
+pub fn file_input(path: &Path) -> std::ffi::OsString {
+    let mut s = std::ffi::OsString::from("file:");
+    s.push(path.as_os_str());
+    s
+}
+
 fn spawn(args: &[&str], path: &Path) -> std::io::Result<(Child, std::process::ChildStdout)> {
     let mut cmd = Command::new(ffmpeg());
     cmd.args(["-v", "error", "-nostdin"]);
     let (before, after) = args.split_at(args.iter().position(|a| *a == "-i").unwrap_or(0));
-    cmd.args(before).arg("-i").arg(path).args(&after[1..]);
+    cmd.args(before).arg("-i").arg(file_input(path)).args(&after[1..]);
     let mut child = cmd.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::null()).spawn()?;
     let out = child.stdout.take().unwrap();
     Ok((child, out))
@@ -296,7 +304,8 @@ fn probe(path: &Path) -> Result<Info, String> {
     let out = Command::new(ffprobe())
         .args(["-v", "error", "-print_format", "json", "-show_entries"])
         .arg("stream=codec_type,width,height,avg_frame_rate,r_frame_rate:stream_disposition=attached_pic:stream_side_data=rotation:stream_tags=rotate:format=duration")
-        .arg(path)
+        .arg("-i")
+        .arg(file_input(path))
         .stdin(Stdio::null())
         .output()
         .map_err(|e| format!("Couldn't run ffprobe: {e}"))?;
